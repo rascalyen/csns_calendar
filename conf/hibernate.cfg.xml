@@ -1,0 +1,92 @@
+<!DOCTYPE hibernate-configuration PUBLIC 
+          "-//Hibernate/Hibernate Configuration DTD//EN"
+          "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
+
+		  
+<hibernate-configuration>
+
+    <session-factory>
+
+        <!--===================-->
+        <!-- database settings -->
+        <!--===================-->
+
+        <property name="hibernate.dialect">
+            org.hibernate.dialect.PostgreSQLDialect
+        </property>
+
+        <property name="query.substitutions">yes 'Y', no 'N'</property>
+        <property name="jdbc.use_streams_for_binary">true</property>
+        <property name="show_sql">false</property>
+
+        <!--=======-->
+        <!-- Cache -->
+        <!--=======-->
+
+        <property name="hibernate.cache.provider_class">
+            org.hibernate.cache.EhCacheProvider
+        </property>
+
+        <!--===============-->
+        <!-- mapping files -->
+        <!--===============-->
+        
+        <mapping resource="hbm/Role.hbm.xml" />   
+        <mapping resource="hbm/User.hbm.xml" />
+        <mapping resource="hbm/File.hbm.xml" />
+        <mapping resource="hbm/Grade.hbm.xml" />
+        <mapping resource="hbm/Course.hbm.xml" />
+        <mapping resource="hbm/Prerequisite.hbm.xml" />
+        <mapping resource="hbm/Section.hbm.xml" />       
+        <mapping resource="hbm/Enrollment.hbm.xml" />
+        <mapping resource="hbm/Advisement.hbm.xml" />
+        <mapping resource="hbm/CourseSubstitution.hbm.xml" />
+        <mapping resource="hbm/CourseTransfer.hbm.xml" />
+        <mapping resource="hbm/CourseWaiver.hbm.xml" />
+        <mapping resource="hbm/Program.hbm.xml" />
+        <mapping resource="hbm/Concentration.hbm.xml" />
+        <mapping resource="hbm/Standing.hbm.xml" />
+        <mapping resource="hbm/AcademicStanding.hbm.xml" />
+        <mapping resource="hbm/GeneratedCin.hbm.xml" />
+        
+        <mapping resource="hbm/Subscribable.hbm.xml" />
+        <mapping resource="hbm/Subscription.hbm.xml" />
+
+        <mapping resource="hbm/qa/Question.hbm.xml" />
+        <mapping resource="hbm/qa/QuestionSection.hbm.xml" />
+        <mapping resource="hbm/qa/QuestionSheet.hbm.xml" />
+        <mapping resource="hbm/qa/Answer.hbm.xml" />
+        <mapping resource="hbm/qa/AnswerSection.hbm.xml" />
+        <mapping resource="hbm/qa/AnswerSheet.hbm.xml" />
+        
+        <mapping resource="hbm/assignment/Assignment.hbm.xml" />        
+        <mapping resource="hbm/assignment/AssignmentTemplate.hbm.xml" />
+        <mapping resource="hbm/assignment/Submission.hbm.xml" />
+
+        <mapping resource="hbm/survey/Survey.hbm.xml" />
+        <mapping resource="hbm/survey/SurveyResponse.hbm.xml" />
+
+        <mapping resource="hbm/assessment/CourseJournal.hbm.xml" />
+        <mapping resource="hbm/assessment/StoredQuery.hbm.xml" />
+        <mapping resource="hbm/assessment/Skill.hbm.xml" />
+        <mapping resource="hbm/assessment/SkillEvaluation.hbm.xml" />
+        <mapping resource="hbm/assessment/MFTAssessmentSummary.hbm.xml" />
+        <mapping resource="hbm/assessment/MFTDistributionType.hbm.xml" />
+        <mapping resource="hbm/assessment/MFTDistribution.hbm.xml" />
+
+        <mapping resource="hbm/mailinglist/Message.hbm.xml" />
+
+        <mapping resource="hbm/forum/Post.hbm.xml" />
+
+        <mapping resource="hbm/News.hbm.xml" />
+
+        <mapping resource="hbm/wiki/Revision.hbm.xml" />
+
+        <mapping resource="hbm/logging/RequestLogEntry.hbm.xml" />
+        <mapping resource="hbm/logging/EventLogEntry.hbm.xml" />
+       
+        <mapping resource="hbm/calendar/Task.hbm.xml" />
+        <mapping resource="hbm/calendar/Event.hbm.xml" />
+    </session-factory>
+
+</hibernate-configuration>

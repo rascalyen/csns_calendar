@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="csns" basedir="." default="build">
+
+    <property file="build.properties" />
+
+    <!-- directory layout -->
+    <property name="db.dir" location="db" />
+    <property name="src.dir" location="src" />
+    <property name="lib.dir" location="lib" />
+    <property name="web.dir" location="web" />
+    <property name="conf.dir" location="conf" />
+    <property name="build.dir" location="build" />
+    <property name="class.dir" location="build/classes" />
+    <property name="generated.src.dir" location="build/src" />
+
+    <!-- classpath -->
+    <path id="project.class.path">
+        <pathelement path="${java.class.path}" />
+        <fileset dir="${lib.dir}">
+            <include name="**/*.jar" />
+        </fileset>
+        <fileset dir="${web.dir}/WEB-INF/lib">
+            <include name="**/*.jar" />
+        </fileset>
+        <pathelement path="${class.dir}" />
+    </path>
+
+    <!-- copy filters -->
+    <filterset id="copy.filters">
+        <filter token="app.name" value="${app.name}" />
+        <filter token="app.description" value="${app.description}" />
+        <filter token="app.version" value="${app.version}" />
+        <filter token="app.url" value="${app.url}" />
+        <filter token="file.base.dir" value="${file.base.dir}" />
+        <filter token="log.dir" value="${log.dir}" />
+        <filter token="db.driver" value="${db.driver}" />
+        <filter token="db.url" value="${db.url}" />
+        <filter token="db.username" value="${db.username}" />
+        <filter token="db.password" value="${db.password}" />
+        <filter token="dbcp.initialSize" value="${dbcp.initialSize}" />
+        <filter token="dbcp.maxActive" value="${dbcp.maxActive}" />
+        <filter token="dbcp.maxIdle" value="${dbcp.maxIdle}" />
+        <filter token="mail.smtp.server" value="${mail.smtp.server}" />
+        <filter token="mail.smtp.username" value="${mail.smtp.username}" />
+        <filter token="mail.smtp.password" value="${mail.smtp.password}" />
+        <filter token="logging.enabled" value="${logging.enabled}" />
+    </filterset>
+
+    <!-- do not include hidden files -->
+    <defaultexcludes add="**/.*" />
+
+    <!--=======-->
+    <!-- build -->
+    <!--=======-->
+
+    <target name="init">
+        <mkdir dir="${build.dir}" />
+        <mkdir dir="${class.dir}" />
+        <copy todir="${web.dir}/WEB-INF">
+            <fileset dir="${conf.dir}">
+                <include name="web.xml" />
+            </fileset>
+            <filterset refid="copy.filters" />
+        </copy>
+        <copy file="${conf.dir}/spring-servlet.xml"
+              tofile="${web.dir}/WEB-INF/${app.name}-servlet.xml">
+            <filterset refid="copy.filters" />
+        </copy>
+        <copy file="${conf.dir}/spring-data.xml"
+              tofile="${web.dir}/WEB-INF/${app.name}-data.xml">
+            <filterset refid="copy.filters" />
+        </copy>
+        <copy file="${conf.dir}/spring-email.xml"
+              tofile="${web.dir}/WEB-INF/${app.name}-email.xml">
+            <filterset refid="copy.filters" />
+        </copy>
+        <copy file="${conf.dir}/spring-security.xml"
+              tofile="${web.dir}/WEB-INF/${app.name}-security.xml">
+            <filterset refid="copy.filters" />
+        </copy>
+        <copy todir="${class.dir}" flatten="true">
+            <fileset dir="${conf.dir}">
+                <include name="ehcache.xml" />
+                <include name="hibernate.cfg.xml" />
+                <include name="log4j.xml" />
+                <include name="messages.properties" />
+                <include name="displaytag.properties" />
+            </fileset>
+            <filterset refid="copy.filters" />
+        </copy>
+        <copy todir="${class.dir}/hbm">
+            <fileset dir="${src.dir}/hbm" />
+        </copy>
+        <copy todir="${class.dir}/xsl">
+            <fileset dir="${src.dir}/xsl" />
+        </copy>
+    </target>
+
+    <target name="build" depends="init">
+        <javac destdir="${class.dir}" deprecation="on" debug="${compile.debug}"
+            includeAntRuntime="false" >
+            <src path="${src.dir}" />
+            <classpath refid="project.class.path" />
+            <compilerarg value="-Xlint:unchecked" />
+        </javac>
+    </target>
+
+    <target name="clean">
+        <delete dir="${generated.src.dir}" />
+        <delete dir="${class.dir}" />
+        <delete dir="${build.dir}" />
+        <delete>
+            <fileset dir="${web.dir}/WEB-INF">
+                <include name="${app.name}-servlet.xml" />
+                <include name="${app.name}-data.xml" />
+                <include name="${app.name}-email.xml" />
+                <include name="${app.name}-security.xml" />
+                <include name="web.xml" />
+            </fileset>
+        </delete>
+    </target>
+
+    <target name="war" depends="build">
+        <war destfile="${build.dir}/${app.name}.war"
+             webxml="${web.dir}/WEB-INF/web.xml">
+            <fileset dir="${web.dir}">
+                <exclude name="WEB-INF/**/*" />
+                <exclude name="**/*.psd" />
+            </fileset>
+            <classes dir="${class.dir}" />
+            <webinf dir="${web.dir}/WEB-INF" excludes="web.xml" />
+        </war>
+    </target>
+
+    <!--=============================-->
+    <!-- hibernate tasks and targets -->
+    <!--=============================-->
+
+    <target name="hbm2ddl" depends="build">
+        <taskdef name="hibernatetool"
+                 classname="org.hibernate.tool.ant.HibernateToolTask"
+                 classpathref="project.class.path" />
+        <hibernatetool>
+            <configuration configurationfile="${class.dir}/hibernate.cfg.xml" />
+            <hbm2ddl export="false"
+                     destdir="${db.dir}"
+                     outputfilename="${app.name}.ddl"
+                     delimiter=";"
+                     format="true"
+                     haltonerror="true" />
+        </hibernatetool>
+    </target>
+	
+	<!--=====-->
+	<!-- Zip -->
+	<!--=====-->
+	
+    <target name="zip" depends="build">
+        <zip destfile="csns.zip" update="true">
+            <fileset dir=".">
+            	   <exclude name="csns.zip" />
+                   <exclude name="build.properties" />
+            	   <exclude name="build.properties.sample" />
+                   <exclude name="**/*.jar" />
+                   <exclude name="**/*.class" />
+                   <exclude name="build/" />
+            	   <exclude name="dist/" />
+                   <exclude name=".svn/" />
+            	   <exclude name=".settings/" />
+            	   <exclude name=".externalToolBuilders/" />
+            	   <exclude name="web/javascript/ckeditor/" />
+            </fileset>
+        </zip>
+    </target>
+	
+	
+</project>

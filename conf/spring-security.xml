@@ -1,0 +1,385 @@
+<?xml version="1.0"?>
+
+
+<!DOCTYPE beans PUBLIC
+          "-//SPRING//DTD BEAN//EN"
+          "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+
+    <!--===================================-->
+    <!-- filter chain and standard filters -->
+    <!--===================================-->
+
+    <bean id="springSecurityFilterChain"
+        class="org.springframework.security.util.FilterChainProxy">
+        <property name="filterInvocationDefinitionSource">
+            <value>
+                CONVERT_URL_TO_LOWERCASE_BEFORE_COMPARISON
+                PATTERN_TYPE_APACHE_ANT
+                /**=httpSessionContextIntegrationFilter,authenticationProcessingFilter,anonymousProcessingFilter,exceptionTranslationFilter,filterInvocationInterceptor
+            </value>
+        </property>
+    </bean>
+
+    <bean id="httpSessionContextIntegrationFilter"
+        class="org.springframework.security.context.HttpSessionContextIntegrationFilter">
+    </bean>
+
+    <bean id="anonymousProcessingFilter"
+        class="org.springframework.security.providers.anonymous.AnonymousProcessingFilter">
+        <property name="key" value="guest" />
+        <property name="userAttribute" value="guest,ROLE_GUEST" />
+    </bean>
+
+    <bean id="exceptionTranslationFilter"
+        class="org.springframework.security.ui.ExceptionTranslationFilter">
+        <property name="authenticationEntryPoint">
+            <ref local="authenticationProcessingFilterEntryPoint" />
+        </property>
+    </bean>
+
+    <!--================-->
+    <!-- authentication -->
+    <!--================-->
+
+    <bean id="authenticationManager"
+        class="org.springframework.security.providers.ProviderManager">
+        <property name="providers">
+            <list>
+                <ref local="daoAuthenticationProvider" />
+                <ref local="anonymousAuthenticationProvider" />
+            </list>
+        </property>
+    </bean>
+
+    <bean id="anonymousAuthenticationProvider"
+        class="org.springframework.security.providers.anonymous.AnonymousAuthenticationProvider">
+        <property name="key" value="guest" />
+    </bean>
+
+    <bean id="daoAuthenticationProvider"
+        class="org.springframework.security.providers.dao.DaoAuthenticationProvider">
+        <property name="passwordEncoder" ref="passwordEncoder" />
+        <property name="userDetailsService" ref="jdbcDaoImpl" />
+    </bean>
+
+    <bean id="passwordEncoder"
+        class="org.springframework.security.providers.encoding.Md5PasswordEncoder" />
+
+    <bean id="jdbcDaoImpl"
+        class="org.springframework.security.userdetails.jdbc.JdbcDaoImpl">
+        <property name="dataSource" ref="dataSource" />
+        <property name="authoritiesByUsernameQuery">
+            <value>
+                select u.username, r.name from users u, roles r, authorities a
+                where u.id = a.user_id and r.id = a.role_id and u.username=?
+            </value>
+        </property>
+    </bean>
+
+    <bean id="authenticationProcessingFilter"
+        class="org.springframework.security.ui.webapp.AuthenticationProcessingFilter">
+        <property name="authenticationManager" ref="authenticationManager" />
+        <property name="authenticationFailureUrl" value="/login.html" />
+        <property name="defaultTargetUrl" value="/home.html" />
+        <property name="alwaysUseDefaultTargetUrl" value="false" />
+        <property name="filterProcessesUrl" value="/j_spring_security_check" />
+    </bean>
+
+    <bean id="authenticationProcessingFilterEntryPoint"
+        class="org.springframework.security.ui.webapp.AuthenticationProcessingFilterEntryPoint">
+        <property name="loginFormUrl" value="/login.html" />
+        <property name="forceHttps" value="false" />
+    </bean>
+
+    <!--=====================-->
+    <!-- authorization - url -->
+    <!--=====================-->
+
+    <bean id="roleVoter" class="org.springframework.security.vote.RoleVoter" />
+
+    <bean id="urlAccessDecisionManager"
+        class="org.springframework.security.vote.AffirmativeBased">
+        <property name="allowIfAllAbstainDecisions" value="false" />
+        <property name="decisionVoters">
+            <list>
+                <ref local="roleVoter" />
+            </list>
+        </property>
+    </bean>
+
+    <bean id="filterInvocationInterceptor"
+        class="org.springframework.security.intercept.web.FilterSecurityInterceptor">
+        <property name="authenticationManager" ref="authenticationManager" />
+        <property name="accessDecisionManager" ref="urlAccessDecisionManager" />
+        <property name="objectDefinitionSource">
+            <value>
+                CONVERT_URL_TO_LOWERCASE_BEFORE_COMPARISON
+                PATTERN_TYPE_APACHE_ANT
+                
+                /calendar.html=ROLE_USER,ROLE_GUEST
+                /viewevent.html=ROLE_USER,ROLE_GUEST
+                /downloadeventzip.html=ROLE_USER,ROLE_GUEST
+                /searchevents.html=ROLE_USER,ROLE_GUEST
+                /addevent.html=ROLE_USER
+                /editevent.html=ROLE_USER
+                /deleteevent.html=ROLE_USER
+                /uploadeventfiles.html=ROLE_USER
+                /addtask.html=ROLE_USER
+                /marktask.html=ROLE_USER
+                
+                /admin/**=ROLE_ADMIN
+                /faculty/**=ROLE_FACULTY,ROLE_ADMIN
+                /instructor/**=ROLE_INSTRUCTOR,ROLE_ADMIN
+                /student/**=ROLE_STUDENT,ROLE_ADMIN
+                /assessment/mft/**=ROLE_FACULTY,ROLE_ADMIN,ROLE_PROGRAM_REVIEWER
+                /assessment/**=ROLE_INSTRUCTOR,ROLE_ADMIN,ROLE_PROGRAM_REVIEWER
+                /survey/**=ROLE_FACULTY,ROLE_ADMIN
+                /mailinglist/subscriptions.html=ROLE_USER
+                /forum/create*.html=ROLE_USER
+                /forum/reply*.html=ROLE_USER
+                /forum/edit*.html=ROLE_USER
+                /forum/delete*.html=ROLE_USER
+                /forum/toggle*.html=ROLE_USER
+                /forum/delete*.html=ROLE_FACULTY,ROLE_ADMIN
+                /forum/subscriptions.html=ROLE_USER
+                /wiki/edit*.html=ROLE_USER
+                /wiki/move*.html=ROLE_USER
+                /wiki/create*.html=ROLE_USER
+                /wiki/revert*.html=ROLE_USER
+                /register.html=ROLE_NEWUSER
+                /account.html=ROLE_USER
+                /subscribe.html=ROLE_USER
+                /unsubscribe.html=ROLE_USER
+                /logout.html=ROLE_USER
+                /download.html=ROLE_USER,ROLE_GUEST
+                /email.html=ROLE_USER
+                /generatecin.html=ROLE_INSTRUCTOR,ROLE_FACULTY,ROLE_ADMIN
+                /qa/**=ROLE_USER
+                /user/edit**=ROLE_ADMIN
+                /user/**=ROLE_FACULTY,ROLE_ADMIN
+                /file/view*.html=ROLE_USER,ROLE_GUEST
+                /file/**=ROLE_USER
+                /**=ROLE_USER,ROLE_GUEST
+            </value>
+        </property>
+    </bean>
+
+    <!--=========================-->
+    <!-- authorization - objects -->
+    <!--=========================-->
+    
+    <bean id="eventWriteVoter"
+        class="csns.spring.security.voter.EventWriteVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="processConfigAttribute" value="PERM_EVENT_WRITE" />
+        <property name="privilegedRoles" value="ROLE_ADMIN" />
+    </bean>    
+
+    <bean id="fileWriteVoter"
+        class="csns.spring.security.voter.FileWriteVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="processConfigAttribute" value="PERM_FILE_WRITE" />
+        <property name="privilegedRoles" value="ROLE_ADMIN" />
+    </bean>
+
+    <bean id="courseWriteVoter"
+        class="csns.spring.security.voter.CourseWriteVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="processConfigAttribute" value="PERM_COURSE_WRITE" />
+        <property name="privilegedRoles" value="ROLE_ADMIN" />
+    </bean>
+
+    <bean id="enrollmentWriteVoter"
+        class="csns.spring.security.voter.EnrollmentWriteVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="processConfigAttribute" value="PERM_ENROLLMENT_WRITE" />
+        <property name="privilegedRoles" value="ROLE_ADMIN" />
+    </bean>
+
+    <bean id="courseJournalWriteVoter"
+        class="csns.spring.security.voter.CourseJournalWriteVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="processConfigAttribute" value="PERM_COURSEJOURNAL_WRITE" />
+        <property name="privilegedRoles" value="ROLE_ADMIN" />
+    </bean>
+
+    <bean id="storedQueryWriteVoter"
+        class="csns.spring.security.voter.StoredQueryWriteVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="processConfigAttribute" value="PERM_STOREDQUERY_WRITE" />
+        <property name="privilegedRoles" value="ROLE_ADMIN" />
+    </bean>
+
+    <bean id="skillEvaluationWriteVoter"
+        class="csns.spring.security.voter.SkillEvaluationWriteVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="processConfigAttribute" value="PERM_SKILLEVALUATION_WRITE" />
+    </bean>
+
+    <bean id="forumPostWriteVoter"
+        class="csns.spring.security.voter.ForumPostWriteVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="processConfigAttribute" value="PERM_FORUM_POST_WRITE" />
+    </bean>
+
+    <bean id="questionSheetWriteVoter"
+        class="csns.spring.security.voter.QuestionSheetWriteVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="processConfigAttribute" value="PERM_QUESTION_SHEET_WRITE" />
+    </bean>
+
+    <bean id="answerSheetWriteVoter"
+        class="csns.spring.security.voter.AnswerSheetWriteVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="processConfigAttribute" value="PERM_ANSWER_SHEET_WRITE" />
+    </bean>
+
+    <bean id="surveyWriteVoter"
+        class="csns.spring.security.voter.SurveyWriteVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="processConfigAttribute" value="PERM_SURVEY_WRITE" />
+        <property name="privilegedRoles" value="ROLE_ADMIN" />
+    </bean>
+
+    <bean id="revisionWriteVoter"
+        class="csns.spring.security.voter.RevisionWriteVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="processConfigAttribute" value="PERM_WIKI_REVISION_WRITE" />
+        <property name="privilegedRoles" value="ROLE_ADMIN" />
+    </bean>
+
+    <bean id="methodAccessDecisionManager"
+        class="csns.spring.security.UnanimousBased">
+        <property name="allowIfAllAbstainDecisions" value="false" />
+        <property name="decisionVoters">
+            <list>
+                <ref local="roleVoter" />
+                <ref local="eventWriteVoter" />
+                <ref local="fileWriteVoter" />
+                <ref local="courseWriteVoter" />
+                <ref local="enrollmentWriteVoter" />
+                <ref local="courseJournalWriteVoter" />
+                <ref local="storedQueryWriteVoter" />
+                <ref local="skillEvaluationWriteVoter" />
+                <ref local="forumPostWriteVoter" />
+                <ref local="questionSheetWriteVoter" />
+                <ref local="answerSheetWriteVoter" />
+                <ref local="surveyWriteVoter" />
+                <ref local="revisionWriteVoter" />
+            </list>
+        </property>
+    </bean>
+    
+    <bean id="eventReadVoter"
+        class="csns.spring.security.voter.EventReadVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="processConfigAttribute" value="PERM_EVENT_READ" />
+        <property name="privilegedRoles" value="ROLE_ADMIN" />
+    </bean>    
+
+    <bean id="assignmentReadVoter"
+        class="csns.spring.security.voter.AssignmentReadVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="processConfigAttribute" value="PERM_ASSIGNMENT_READ" />
+        <property name="privilegedRoles" value="ROLE_ADMIN" />
+    </bean>
+
+    <bean id="submissionReadVoter"
+        class="csns.spring.security.voter.SubmissionReadVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="processConfigAttribute" value="PERM_SUBMISSION_READ" />
+        <property name="privilegedRoles"
+            value="ROLE_ADMIN,ROLE_FACULTY,ROLE_PROGRAM_REVIEWER" />
+    </bean>
+
+    <bean id="sectionReadVoter"
+        class="csns.spring.security.voter.SectionReadVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="processConfigAttribute" value="PERM_SECTION_READ" />
+        <property name="privilegedRoles" value="ROLE_ADMIN" />
+    </bean>
+
+    <bean id="fileReadVoter"
+        class="csns.spring.security.voter.FileReadVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="processConfigAttribute" value="PERM_FILE_READ" />
+        <property name="privilegedRoles" value="ROLE_ADMIN" />
+    </bean>
+
+    <bean id="enrollmentReadVoter"
+        class="csns.spring.security.voter.EnrollmentReadVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="processConfigAttribute" value="PERM_ENROLLMENT_READ" />
+        <property name="privilegedRoles"
+            value="ROLE_ADMIN,ROLE_FACULTY,ROLE_PROGRAM_REVIEWER" />
+    </bean>
+
+    <bean id="questionSheetReadVoter"
+        class="csns.spring.security.voter.QuestionSheetReadVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="processConfigAttribute" value="PERM_QUESTION_SHEET_READ" />
+        <property name="privilegedRoles" value="ROLE_ADMIN" />
+    </bean>
+
+    <bean id="questionReadVoter"
+        class="csns.spring.security.voter.QuestionReadVoter">
+        <property name="userDao" ref="userDao" />
+        <property name="questionSheetDao" ref="questionSheetDao" />
+        <property name="processConfigAttribute" value="PERM_QUESTION_READ" />
+        <property name="privilegedRoles" value="ROLE_ADMIN,ROLE_FACULTY" />
+    </bean>
+
+    <bean id="afterInvocationManager"
+        class="org.springframework.security.afterinvocation.AfterInvocationProviderManager">
+        <property name="providers">
+            <list>
+                <ref local="eventReadVoter" />
+                <ref local="assignmentReadVoter" />
+                <ref local="submissionReadVoter" />
+                <ref local="sectionReadVoter" />
+                <ref local="fileReadVoter" />
+                <ref local="enrollmentReadVoter" />
+                <ref local="questionSheetReadVoter" />
+                <ref local="questionReadVoter" />
+            </list>
+        </property>
+    </bean>
+
+    <bean id="methodInvocationInterceptor"
+        class="org.springframework.security.intercept.method.aopalliance.MethodSecurityInterceptor">
+        <property name="authenticationManager" ref="authenticationManager" />
+        <property name="accessDecisionManager"
+            ref="methodAccessDecisionManager" />
+        <property name="afterInvocationManager" ref="afterInvocationManager" />
+        <property name="objectDefinitionSource">
+            <value>
+                csns.model.calendar.dao.EventDao.getEventById=ROLE_USER,ROLE_GUEST,PERM_EVENT_READ
+                csns.model.calendar.dao.EventDao.saveEvent=ROLE_USER,PERM_EVENT_WRITE
+                csns.model.calendar.dao.EventDao.deleteEvent=ROLE_USER,PERM_EVENT_WRITE
+            
+                csns.model.dao.SectionDao.getSectionById=ROLE_USER,PERM_SECTION_READ
+                csns.model.dao.FileDao.getFileById=ROLE_USER,ROLE_GUEST,PERM_FILE_READ
+                csns.model.dao.FileDao.saveFile=ROLE_USER,PERM_FILE_WRITE
+                csns.model.dao.CourseDao.saveCourse=ROLE_FACULTY,ROLE_ADMIN,PERM_COURSE_WRITE
+                csns.model.dao.AcademicStandingDao.saveAcademicStanding=ROLE_FACULTY,ROLE_ADMIN
+                csns.model.dao.EnrollmentDao.getEnrollmentById=ROLE_USER,PERM_ENROLLMENT_READ
+                csns.model.dao.EnrollmentDao.saveEnrollment=ROLE_INSTRUCTOR,PERM_ENROLLMENT_WRITE
+                csns.model.dao.EnrollmentDao.deleteEnrollment=ROLE_INSTRUCTOR,PERM_ENROLLMENT_WRITE
+                csns.model.assignment.dao.AssignmentDao.getAssignmentById=ROLE_USER,PERM_ASSIGNMENT_READ
+                csns.model.assignment.dao.SubmissionDao.getSubmissionById=ROLE_USER,PERM_SUBMISSION_READ
+                csns.model.assessment.dao.CourseJournalDao.saveCourseJournal=ROLE_INSTRUCTOR,ROLE_ADMIN,PERM_COURSEJOURNAL_WRITE
+                csns.model.assessment.dao.StoredQueryDao.saveStoredQuery=ROLE_INSTRUCTOR,ROLE_ADMIN,PERM_STOREDQUERY_WRITE
+                csns.model.assessment.dao.SkillEvaluationDao.saveSkillEvaluation=ROLE_INSTRUCTOR,PERM_SKILLEVALUATION_WRITE
+                csns.model.forum.dao.PostDao.savePost=ROLE_USER,PERM_FORUM_POST_WRITE
+                csns.model.qa.dao.QuestionSheetDao.getQuestionSheetById=ROLE_INSTRUCTOR,PERM_QUESTION_SHEET_READ
+                csns.model.qa.dao.QuestionSheetDao.saveQuestionSheet=ROLE_INSTRUCTOR,PERM_QUESTION_SHEET_WRITE
+                csns.model.qa.dao.QuestionDao.getQuestionById=ROLE_INSTRUCTOR,PERM_QUESTION_READ
+                csns.model.qa.dao.AnswerSheetDao.saveAnswerSheet=ROLE_USER,PERM_ANSWER_SHEET_WRITE
+                csns.model.survey.dao.SurveyDao.saveSurvey=ROLE_USER,PERM_SURVEY_WRITE
+                csns.model.wiki.dao.RevisionDao.saveRevision=ROLE_USER,PERM_WIKI_REVISION_WRITE
+            </value>
+        </property>
+    </bean>
+
+</beans>
