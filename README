@@ -1,13 +1,13 @@
----------
 CSNS is a teaching assistant website of CS department which is MVC structured 
 and is based on Spring, Hibernate, jQuery and PostgreSQL. Instructors and 
 students have to log in before they can make announcements, submit assignments, 
 check grades, and discuss on course forums. 
 The code here is to add calendar, event, task features on CSNS.
----------
 
-Libraries for CSNS
----------
+-------------------
+
+Libraries for CSNS:
+
 . CKEditor
 . daisydiff 1.1
 . Displaytag 1.1
