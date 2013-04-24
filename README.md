@@ -4,7 +4,7 @@ students have to log in before they can make announcements, submit assignments,
 check grades, and discuss on course forums. 
 The code here is to add calendar, event, task features on CSNS.
 
--------------------
+----------
 
 Libraries for CSNS:
 
